@@ -43,6 +43,7 @@ export function applyDefaultsToMonth(defaults: DefaultTransaction[], monthKey: s
     description: def.description,
     amount: def.amount || 0,
     monthKey,
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    notificationDay: def.notificationDay
   }));
 }

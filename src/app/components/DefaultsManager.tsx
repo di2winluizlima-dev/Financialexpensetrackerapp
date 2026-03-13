@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Trash2, X, Plus } from 'lucide-react';
+import { Trash2, X, Plus, Bell } from 'lucide-react';
 import { DefaultTransaction } from '../types/finance';
 
 interface DefaultsManagerProps {
@@ -13,6 +13,8 @@ export function DefaultsManager({ defaults, onUpdateDefaults, onClose }: Default
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [type, setType] = useState<'both' | 'description'>('both');
+  const [hasNotification, setHasNotification] = useState(false);
+  const [notificationDay, setNotificationDay] = useState('1');
 
   const handleDelete = (id: string) => {
     onUpdateDefaults(defaults.filter(d => d.id !== id));
@@ -23,17 +25,22 @@ export function DefaultsManager({ defaults, onUpdateDefaults, onClose }: Default
     
     if (!description.trim()) return;
 
+    const numDay = hasNotification ? parseInt(notificationDay) : undefined;
+
     const newDefault: DefaultTransaction = {
       id: Date.now().toString(),
       description: description.trim(),
       amount: type === 'both' && amount ? parseFloat(amount) : undefined,
-      type
+      type,
+      notificationDay: numDay
     };
 
     onUpdateDefaults([...defaults, newDefault]);
     setDescription('');
     setAmount('');
     setType('both');
+    setHasNotification(false);
+    setNotificationDay('1');
     setShowAddForm(false);
   };
 
@@ -65,7 +72,17 @@ export function DefaultsManager({ defaults, onUpdateDefaults, onClose }: Default
               className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
             >
               <div className="flex-1">
-                <p className="font-medium text-gray-800">{def.description}</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-medium text-gray-800">{def.description}</p>
+                  {def.notificationDay && (
+                    <div className="flex items-center gap-1 px-2 py-0.5 bg-indigo-100 rounded-full">
+                      <Bell className="w-3 h-3 text-indigo-600" />
+                      <span className="text-xs text-indigo-600">
+                        Dia {def.notificationDay}
+                      </span>
+                    </div>
+                  )}
+                </div>
                 <p className="text-sm text-gray-500">
                   {def.type === 'both' 
                     ? `Valor fixo: R$ ${def.amount?.toFixed(2)}` 
@@ -145,6 +162,40 @@ export function DefaultsManager({ defaults, onUpdateDefaults, onClose }: Default
             </div>
           )}
 
+          <div className="bg-gray-50 p-3 rounded-lg space-y-2">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={hasNotification}
+                onChange={(e) => setHasNotification(e.target.checked)}
+                className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+              />
+              <Bell className="w-4 h-4 text-gray-600" />
+              <span className="text-sm font-medium text-gray-700">
+                Notificação mensal
+              </span>
+            </label>
+
+            {hasNotification && (
+              <div className="ml-6">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Dia do mês
+                </label>
+                <select
+                  value={notificationDay}
+                  onChange={(e) => setNotificationDay(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                >
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                    <option key={day} value={day}>
+                      Dia {day}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+
           <div className="flex gap-2">
             <button
               type="submit"
@@ -159,6 +210,8 @@ export function DefaultsManager({ defaults, onUpdateDefaults, onClose }: Default
                 setDescription('');
                 setAmount('');
                 setType('both');
+                setHasNotification(false);
+                setNotificationDay('1');
               }}
               className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg py-2 font-medium transition-colors"
             >
